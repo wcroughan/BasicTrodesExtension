@@ -5,28 +5,42 @@ VisualStudioVersion = 15.0.27703.2026
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BasicExtension", "BasicExtension\BasicExtension.vcxproj", "{7E18BCA8-C8F8-4541-8936-EA7ED4F6DB17}"
 EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "BasicGUI", "BasicGUI\BasicGUI.pyproj", "{566E6189-F274-4E1D-B327-A6644D908857}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
 		Debug|ARM = Debug|ARM
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
 		Release|ARM = Release|ARM
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7E18BCA8-C8F8-4541-8936-EA7ED4F6DB17}.Debug|Any CPU.ActiveCfg = Debug|x86
 		{7E18BCA8-C8F8-4541-8936-EA7ED4F6DB17}.Debug|ARM.ActiveCfg = Debug|ARM
 		{7E18BCA8-C8F8-4541-8936-EA7ED4F6DB17}.Debug|ARM.Build.0 = Debug|ARM
 		{7E18BCA8-C8F8-4541-8936-EA7ED4F6DB17}.Debug|x64.ActiveCfg = Debug|x64
 		{7E18BCA8-C8F8-4541-8936-EA7ED4F6DB17}.Debug|x64.Build.0 = Debug|x64
 		{7E18BCA8-C8F8-4541-8936-EA7ED4F6DB17}.Debug|x86.ActiveCfg = Debug|x86
 		{7E18BCA8-C8F8-4541-8936-EA7ED4F6DB17}.Debug|x86.Build.0 = Debug|x86
+		{7E18BCA8-C8F8-4541-8936-EA7ED4F6DB17}.Release|Any CPU.ActiveCfg = Release|x86
 		{7E18BCA8-C8F8-4541-8936-EA7ED4F6DB17}.Release|ARM.ActiveCfg = Release|ARM
 		{7E18BCA8-C8F8-4541-8936-EA7ED4F6DB17}.Release|ARM.Build.0 = Release|ARM
 		{7E18BCA8-C8F8-4541-8936-EA7ED4F6DB17}.Release|x64.ActiveCfg = Release|x64
 		{7E18BCA8-C8F8-4541-8936-EA7ED4F6DB17}.Release|x64.Build.0 = Release|x64
 		{7E18BCA8-C8F8-4541-8936-EA7ED4F6DB17}.Release|x86.ActiveCfg = Release|x86
 		{7E18BCA8-C8F8-4541-8936-EA7ED4F6DB17}.Release|x86.Build.0 = Release|x86
+		{566E6189-F274-4E1D-B327-A6644D908857}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{566E6189-F274-4E1D-B327-A6644D908857}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{566E6189-F274-4E1D-B327-A6644D908857}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{566E6189-F274-4E1D-B327-A6644D908857}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{566E6189-F274-4E1D-B327-A6644D908857}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{566E6189-F274-4E1D-B327-A6644D908857}.Release|ARM.ActiveCfg = Release|Any CPU
+		{566E6189-F274-4E1D-B327-A6644D908857}.Release|x64.ActiveCfg = Release|Any CPU
+		{566E6189-F274-4E1D-B327-A6644D908857}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
