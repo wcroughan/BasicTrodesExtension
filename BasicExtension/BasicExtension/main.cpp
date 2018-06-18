@@ -1,28 +1,4 @@
-#include <stdarg.h>
-#include "TrodesNetwork/AbstractModuleClient.h"
-
-extern "C" {
-	__attribute__((visibility("default"))) void pyfun_end_first_run();
-	__attribute__((visibility("default"))) void pyfun_end_second_run();
-	__attribute__((visibility("default"))) int pyfun_start();
-}
-
-//Currently nothing special, but has potential!
-class TestClient : public AbstractModuleClient {
-public:
-	using AbstractModuleClient::AbstractModuleClient;
-
-	//optional overwrite functions
-	void recv_file_open(std::string filename);
-	void recv_file_close();
-	void recv_acquisition(std::string acquisition_type, uint32_t timestamp);
-	void recv_source(std::string sourcename);
-	void recv_quit();
-	void recv_time(uint32_t timestamp);
-	void recv_timerate(int timerate);
-	//! Event received. Reimplement to write in if/else statements for events
-	void recv_event(std::string origin, std::string event, TrodesMsg &msg);
-};
+#include "main.h"
 
 
 struct timespec exec_start_time;
@@ -49,15 +25,21 @@ int pyfun_start() {
 	printf("hello, love!\n");
 
 	//create log file
-	std::string logfname = "/home/wcroughan/test_extension_log.txt";
+	int iii = 3;
+	for (int i = 0; i < iii; i++)
+	{
+		printf("i = %d\n", i);
+	}
+
+	std::string logfname = "test_extension_log.txt";
 	if ((logout = fopen(logfname.c_str(), "w")) == (FILE*)NULL) {
 		printf("Couldn't create log file\n");
 		return -1;
 	}
+	clock_gettime(CLOCK_REALTIME, &exec_start_time);
 	printf("Created log file\n");
 	log_msg("Hello, log!");
 
-	clock_gettime(CLOCK_REALTIME, &exec_start_time);
 
 	//connect
 	const std::string CLIENT_ID = "CHOIR";
@@ -70,6 +52,7 @@ int pyfun_start() {
 		return false;
 	}
 
+	printf("initialize went well!");
 
 	std::string outfname = "neural_data_outfile";
 	FILE* nout;
