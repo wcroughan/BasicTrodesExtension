@@ -1,25 +1,21 @@
 #include "main.h"
 
-int main() {
-	//return pyfun_start();
-
-
-	printf("hello, love!\n");
-
-
+int maintwo() {
 	//connect
 	const std::string CLIENT_ID = "CHOIR";
 	const std::string CLIENT_ADDR = "tcp://127.0.0.1";
-	const int CLIENT_PORT = 4220;
+	const int CLIENT_PORT = 49152;
 	TestClient *client = new TestClient(CLIENT_ID.c_str(), CLIENT_ADDR.c_str(), CLIENT_PORT);
-	if (!client->initialize()) {
+	if (client->initialize()) {
 		printf("Couldn't initialize network connection\n");
 		delete client;
-		return false;
+		return -1;
 	}
 
-	printf("initialize went well!");
+	printf("initialize went well!\n");
 
 
 	client->sendTimeRateRequest();
+
+	std::this_thread::sleep_for(std::chrono::seconds(1));
 }
