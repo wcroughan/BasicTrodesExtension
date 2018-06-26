@@ -105,25 +105,25 @@ int pyfun_start() {
 
 	const int TRODES_BUF_SIZE = 1024;
 	std::vector<std::string> chans;
-	const int num_tets = 6;
-	const int num_chans = num_tets * 4;
-	for (size_t i = 0; i < num_chans; i++)
-	{
-		chans.push_back(std::to_string(i));
-	}
+	const int num_tets = 64;
+	for (size_t i = 0; i < num_tets; i++)
+		for (size_t j = 0; j < 4; j++)
+			chans.push_back(std::to_string(i+1) + "," + std::to_string(j+1));
 
 	NeuralConsumer *neucon = client->subscribeNeuralData(TRODES_BUF_SIZE, chans);
 	neucon->initialize();
 	HFSubConsumer *vidcon = client->subscribeHighFreqData("PositionData", "CameraModule");
 	vidcon->initialize();
 
-	int16_t* neubuf = (int16_t*)malloc(sizeof(int16_t) * TRODES_BUF_SIZE * chans.size());
+	int16_t* neubuf = (int16_t*)malloc(sizeof(int16_t) * chans.size());
 	int vidsz = vidcon->getType().getByteSize();
 	char* vidbuf = (char*)malloc(vidsz);
 	log_msg("vidsz = %d", vidsz);
 
 	struct timespec start_stream, current_stream;
 	clock_gettime(CLOCK_REALTIME, &start_stream);
+
+	bool nonzerodata = false;
 
 	do {
 		size_t n = neucon->available(0);
@@ -132,6 +132,12 @@ int pyfun_start() {
 			timestamp_t ts = neucon->getData(neubuf);
 			fwrite(&ts, sizeof(timestamp_t), 1, nout_ts);
 			fwrite(neubuf, sizeof(int16_t), chans.size(), nout);
+
+			for (int j = 0; j < chans.size(); j++)
+			{
+				if (neubuf[j])
+					nonzerodata = true;
+			}
 		}
 		log_msg("neu: %d", n);
 
@@ -150,6 +156,7 @@ int pyfun_start() {
 
 	} while (current_stream.tv_sec - start_stream.tv_sec < 4);
 
+	printf("nonzerodata? %d\n", int(nonzerodata));
 
 	client->unsubscribeHighFreqData("PositionData", "CameraModule");
 	client->unsubscribeHighFreqData(hfType_NEURO, TRODES_NETWORK_ID);
