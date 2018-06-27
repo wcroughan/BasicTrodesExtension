@@ -58,20 +58,6 @@ int pyfun_start() {
 		return -1;
 	}
 
-	outfname = "video_data_outfile_data";
-	FILE* vout_dat;
-	if ((vout_dat = fopen(outfname.c_str(), "wb")) == (FILE*)NULL) {
-		printf("couldn't open output file\n");
-		return -1;
-	}
-
-	outfname = "neural_data_outfile_info";
-	FILE* vout_inf;
-	if ((vout_inf = fopen(outfname.c_str(), "wb")) == (FILE*)NULL) {
-		printf("couldn't open output file\n");
-		return -1;
-	}
-
 	outfname = "neural_data_outfile2";
 	FILE* nout2;
 	if ((nout2 = fopen(outfname.c_str(), "wb")) == (FILE*)NULL) {
@@ -82,20 +68,6 @@ int pyfun_start() {
 	outfname = "neural_data_outfile_timestamps2";
 	FILE* nout_ts2;
 	if ((nout_ts2 = fopen(outfname.c_str(), "wb")) == (FILE*)NULL) {
-		printf("couldn't open output file\n");
-		return -1;
-	}
-
-	outfname = "video_data_outfile_data2";
-	FILE* vout_dat2;
-	if ((vout_dat2 = fopen(outfname.c_str(), "wb")) == (FILE*)NULL) {
-		printf("couldn't open output file\n");
-		return -1;
-	}
-
-	outfname = "neural_data_outfile_info2";
-	FILE* vout_inf2;
-	if ((vout_inf2 = fopen(outfname.c_str(), "wb")) == (FILE*)NULL) {
 		printf("couldn't open output file\n");
 		return -1;
 	}
@@ -112,13 +84,13 @@ int pyfun_start() {
 
 	NeuralConsumer *neucon = client->subscribeNeuralData(TRODES_BUF_SIZE, chans);
 	neucon->initialize();
-	HFSubConsumer *vidcon = client->subscribeHighFreqData("PositionData", "CameraModule");
-	vidcon->initialize();
+	//HFSubConsumer *vidcon = client->subscribeHighFreqData("PositionData", "CameraModule");
+	//vidcon->initialize();
 
 	int16_t* neubuf = (int16_t*)malloc(sizeof(int16_t) * chans.size());
-	int vidsz = vidcon->getType().getByteSize();
-	char* vidbuf = (char*)malloc(vidsz);
-	log_msg("vidsz = %d", vidsz);
+	//int vidsz = vidcon->getType().getByteSize();
+	//char* vidbuf = (char*)malloc(vidsz);
+	//log_msg("vidsz = %d", vidsz);
 
 	struct timespec start_stream, current_stream;
 	clock_gettime(CLOCK_REALTIME, &start_stream);
@@ -139,40 +111,25 @@ int pyfun_start() {
 					nonzerodata = true;
 			}
 		}
-		log_msg("neu: %d", n);
-
-		n = vidcon->available(0);
-		for (int i = 0; i < n; i++)
-		{
-			size_t retval = vidcon->readData(vidbuf, vidsz);
-			fwrite(vidbuf, sizeof(char), vidsz, vout_dat);
-			fwrite(&retval, sizeof(size_t), 1, vout_inf);
-		}
-		log_msg("vid: %d", n);
+		
 
 		std::this_thread::yield();
 
 		clock_gettime(CLOCK_REALTIME, &current_stream);
 
-	} while (current_stream.tv_sec - start_stream.tv_sec < 4);
+	} while (current_stream.tv_sec - start_stream.tv_sec < 60);
 
 	printf("nonzerodata? %d\n", int(nonzerodata));
 
-	client->unsubscribeHighFreqData("PositionData", "CameraModule");
 	client->unsubscribeHighFreqData(hfType_NEURO, TRODES_NETWORK_ID);
 	fclose(nout);
 	fclose(nout_ts);
-	fclose(vout_dat);
-	fclose(vout_inf);
 
-	std::this_thread::sleep_for(std::chrono::seconds(5));
+	std::this_thread::sleep_for(std::chrono::seconds(3));
 
 
 	neucon = client->subscribeNeuralData(TRODES_BUF_SIZE, chans);
 	neucon->initialize();
-	vidcon = client->subscribeHighFreqData("PositionData", "CameraModule");
-	vidcon->initialize();
-
 	//IS_RUNNING = true;
 	clock_gettime(CLOCK_REALTIME, &start_stream);
 
@@ -184,31 +141,16 @@ int pyfun_start() {
 			fwrite(&ts, sizeof(timestamp_t), 1, nout_ts2);
 			fwrite(neubuf, sizeof(int16_t), chans.size(), nout2);
 		}
-		log_msg("neu: %d", n);
-
-		n = vidcon->available(0);
-		for (int i = 0; i < n; i++)
-		{
-			size_t retval = vidcon->readData(vidbuf, vidsz);
-			fwrite(vidbuf, sizeof(char), vidsz, vout_dat2);
-			fwrite(&retval, sizeof(size_t), 1, vout_inf2);
-		}
-		log_msg("vid: %d", n);
-
 		std::this_thread::yield();
 		clock_gettime(CLOCK_REALTIME, &current_stream);
-	} while (current_stream.tv_sec - start_stream.tv_sec < 4);
+	} while (current_stream.tv_sec - start_stream.tv_sec < 60);
 
-	client->unsubscribeHighFreqData("PositionData", "CameraModule");
 	client->unsubscribeHighFreqData(hfType_NEURO, TRODES_NETWORK_ID);
 	fclose(nout2);
 	fclose(nout_ts2);
-	fclose(vout_dat2);
-	fclose(vout_inf2);
 
 
 	free(neubuf);
-	free(vidbuf);
 	delete client;
 	return 0;
 }
