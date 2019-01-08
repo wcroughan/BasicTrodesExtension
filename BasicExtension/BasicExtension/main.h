@@ -4,8 +4,7 @@
 #include "TrodesNetwork/AbstractModuleClient.h"
 
 extern "C" {
-	__attribute__((visibility("default"))) void pyfun_end_first_run();
-	__attribute__((visibility("default"))) void pyfun_end_second_run();
+	__attribute__((visibility("default"))) void pyfun_end_run();
 	__attribute__((visibility("default"))) int pyfun_start();
 }
 

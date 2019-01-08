@@ -60,36 +60,30 @@ class App(QWidget):
 			print("tryina call cfunc")
 			self.pyfun_start()
 			print("called cfunc")
-			self.loadbtn.setTest('Stop first collection')
+			self.loadbtn.setText('Stop first collection')
 			self.state_var = 1
 		elif self.state_var == 1:
-			self.pyfun_end_first_run()
+			self.pyfun_end_run()
 			self.loadbtn.setText('Stop second collection')
 			self.state_var = 2
-		else:
-			self.pyfun_end_second_run()
 
 	###
 	# C++ interaction functions
 	
 	def pyfun_start(self):
-		self.mydll.pyfun_start()
+		self.run_res = self.mydll.pyfun_start()
+		print(self.run_res)
 
-	def pyfun_end_first_run(self):
-		self.mydll.pyfun_end_first_run()
+	def pyfun_end_run(self):
+		self.mydll.pyfun_end_run()
 		
-	def pyfun_end_second_run(self):
-		self.mydll.pyfun_end_second_run()
-
 	def initCConnection(self):
 		self.mydll = cy.CDLL(r"libBasicExtension.so")
-		self.mydll.pyfun_start.argtypes = [];
+		self.mydll.pyfun_start.argtypes = []
 		self.mydll.pyfun_start.restype = cy.c_int
 		
-		self.mydll.pyfun_end_first_run.argtypes = [];
-		self.mydll.pyfun_end_first_run.restype = None
-		self.mydll.pyfun_end_second_run.argtypes = [];
-		self.mydll.pyfun_end_second_run.restype = None
+		self.mydll.pyfun_end_run.argtypes = []
+		self.mydll.pyfun_end_run.restype = None
 		
 
 if __name__ == '__main__':

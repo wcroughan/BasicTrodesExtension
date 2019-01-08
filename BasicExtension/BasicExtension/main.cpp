@@ -2,7 +2,9 @@
 
 
 struct timespec exec_start_time;
-FILE *logout;
+FILE *mylogoutfile;
+bool IS_RUNNING = true;
+
 void log_msg(const char* msg, ...) {
 	char buf[4096];
 	va_list args;
@@ -14,22 +16,69 @@ void log_msg(const char* msg, ...) {
 	long int total_exec_time = (t2.tv_sec - exec_start_time.tv_sec) * 1000000000 + (t2.tv_nsec - exec_start_time.tv_nsec);
 	double log_time = double(total_exec_time) / double(1000000);
 
-	fprintf(logout, "%f\t%s\n", log_time, buf);
+	fprintf(mylogoutfile, "%f\t%s\n", log_time, buf);
 	va_end(args);
 }
 
 void log_msg(std::string msg) { log_msg(msg.c_str()); }
 
-//bool IS_RUNNING = true;
+void thread_launch_fun() {
+
+	struct timespec start_stream, current_stream;
+	clock_gettime(CLOCK_REALTIME, &start_stream);
+
+	do {
+		for (size_t i = 0; i < 1000; i++)
+		{
+			double tmp = 2.0 * 4.0 / 3.0;
+			tmp = tmp * tmp;
+		}
+
+		std::this_thread::yield();
+		clock_gettime(CLOCK_REALTIME, &current_stream);
+	} while (current_stream.tv_sec - start_stream.tv_sec < 10 && IS_RUNNING);
+
+}
+
 int pyfun_start() {
-	std::string logfname = "test_extension_log.txt";
-	if ((logout = fopen(logfname.c_str(), "w")) == (FILE*)NULL) {
+	printf("Hello!\n");
+	std::string logfname = "/home/fosterlab/Downloads/test_extension_log.txt";
+	printf("Hello!\n");
+	printf(logfname.c_str());
+	printf("\n");
+	FILE *af = fopen(logfname.c_str(), "w");
+	if ((mylogoutfile = af) == (FILE*)NULL) {
 		printf("Couldn't create log file\n");
 		return -1;
 	}
+	printf("made log file\n");
+	std::cout.flush();
+	log_msg("Hello, Log!");
+
 	clock_gettime(CLOCK_REALTIME, &exec_start_time);
 	printf("Created log file\n");
 	log_msg("Hello, log!");
+
+	//try priority switching
+
+	std::thread th(thread_launch_fun);
+
+	int sched_choice = SCHED_FIFO;
+	int minparam = sched_get_priority_min(sched_choice);
+	int maxparam = sched_get_priority_max(sched_choice);
+
+	sched_param scp;
+	int pri = (maxparam - minparam) * 4 / 3 + minparam;
+	scp.__sched_priority = pri;
+	int ret;
+	if ((ret = pthread_setschedparam(th.native_handle(), sched_choice, &scp))) {
+		log_msg("Couldn't set data-in thread priority to above normal: returned %d", ret);
+		//TODOSG getting error 22:
+		//ret 22 == EINVAL: "policy is not a recognized policy, or param does not make sense for the policy."
+	}
+	else {
+		log_msg("Data-in thread priority set to %d", pri);
+	}
 
 	//connect
 	const std::string CLIENT_ID = "CHOIR";
@@ -44,33 +93,13 @@ int pyfun_start() {
 
 	log_msg("initialize went well!");
 
-	std::string outfname = "neural_data_outfile";
+	std::string outfname = "spike_data_outfile";
 	FILE* nout;
 	if ((nout = fopen(outfname.c_str(), "wb")) == (FILE*)NULL) {
 		printf("couldn't open output file\n");
 		return -1;
 	}
 
-	outfname = "neural_data_outfile_timestamps";
-	FILE* nout_ts;
-	if ((nout_ts = fopen(outfname.c_str(), "wb")) == (FILE*)NULL) {
-		printf("couldn't open output file\n");
-		return -1;
-	}
-
-	outfname = "neural_data_outfile2";
-	FILE* nout2;
-	if ((nout2 = fopen(outfname.c_str(), "wb")) == (FILE*)NULL) {
-		printf("couldn't open output file\n");
-		return -1;
-	}
-
-	outfname = "neural_data_outfile_timestamps2";
-	FILE* nout_ts2;
-	if ((nout_ts2 = fopen(outfname.c_str(), "wb")) == (FILE*)NULL) {
-		printf("couldn't open output file\n");
-		return -1;
-	}
 
 	client->sendTimeRateRequest();
 	std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -80,14 +109,36 @@ int pyfun_start() {
 	const int num_tets = 64;
 	for (size_t i = 0; i < num_tets; i++)
 		for (size_t j = 0; j < 4; j++)
-			chans.push_back(std::to_string(i+1) + "," + std::to_string(j+1));
+			chans.push_back(std::to_string(i + 1) + "," + std::to_string(j + 1));
 
-	NeuralConsumer *neucon = client->subscribeNeuralData(TRODES_BUF_SIZE, chans);
-	neucon->initialize();
 	//HFSubConsumer *vidcon = client->subscribeHighFreqData("PositionData", "CameraModule");
 	//vidcon->initialize();
 
-	int16_t* neubuf = (int16_t*)malloc(sizeof(int16_t) * chans.size());
+	std::vector<EventDataType> eventList = client->getEventList();
+	for (EventDataType edt : eventList)
+	{
+		printf("%s\n\t%s\n\t%d\n", edt.getName().c_str(), edt.getOrigin().c_str(), edt.constgetsize());
+		log_msg("%s\n\t\t%s\n\t\t%d", edt.getName().c_str(), edt.getOrigin().c_str(), edt.constgetsize());
+	}
+
+	std::vector<HighFreqDataType> hfList = client->getHighFreqList();
+	for (HighFreqDataType dt : hfList)
+	{
+		printf("%s\n\t%s\n\t%d\n\t%s\n\t%s\n", dt.getName().c_str(), dt.getOrigin().c_str(), dt.getByteSize(), dt.getDataFormat().c_str(), dt.getSockAddr().c_str());
+		log_msg("%s\n\t\t%s\n\t\t%d\n\t\t%s\n\t\t%s", dt.getName().c_str(), dt.getOrigin().c_str(), dt.getByteSize(), dt.getDataFormat().c_str(), dt.getSockAddr().c_str());
+	}
+
+	client->subscribeToEvent("CameraModule", "newZone");
+
+	std::vector<std::string> ntrodes;
+	for (size_t i = 0; i < num_tets; i++)
+		ntrodes.push_back(std::to_string(i + 1) + ",0");
+
+	SpikesConsumer *spkcon = client->subscribeSpikeData(TRODES_BUF_SIZE, ntrodes);
+	spkcon->initialize();
+
+	spikePacket spkbuf;
+	//int16_t* neubuf = (int16_t*)malloc(sizeof(int16_t) * chans.size());
 	//int vidsz = vidcon->getType().getByteSize();
 	//char* vidbuf = (char*)malloc(vidsz);
 	//log_msg("vidsz = %d", vidsz);
@@ -98,60 +149,34 @@ int pyfun_start() {
 	bool nonzerodata = false;
 
 	do {
-		size_t n = neucon->available(0);
-		for (int i = 0; i < n; i++)
+		size_t n = spkcon->available(0);
+		for (size_t i = 0; i < n; i++)
 		{
-			timestamp_t ts = neucon->getData(neubuf);
-			fwrite(&ts, sizeof(timestamp_t), 1, nout_ts);
-			fwrite(neubuf, sizeof(int16_t), chans.size(), nout);
+			timestamp_t ts = spkcon->getData(&spkbuf);
 
-			for (int j = 0; j < chans.size(); j++)
-			{
-				if (neubuf[j])
-					nonzerodata = true;
-			}
+			fwrite(&spkbuf, sizeof(spikePacket), 1, nout);
+			fwrite(&ts, sizeof(timestamp_t), 1, nout);
+
+			nonzerodata = true;
 		}
-		
+
 
 		std::this_thread::yield();
 
 		clock_gettime(CLOCK_REALTIME, &current_stream);
 
-	} while (current_stream.tv_sec - start_stream.tv_sec < 60);
+	} while (current_stream.tv_sec - start_stream.tv_sec < 30 && IS_RUNNING);
 
 	printf("nonzerodata? %d\n", int(nonzerodata));
 
-	client->unsubscribeHighFreqData(hfType_NEURO, TRODES_NETWORK_ID);
+	client->unsubscribeHighFreqData(hfType_SPIKE, TRODES_NETWORK_ID);
 	fclose(nout);
-	fclose(nout_ts);
 
 	std::this_thread::sleep_for(std::chrono::seconds(3));
+	th.join();
 
-
-	neucon = client->subscribeNeuralData(TRODES_BUF_SIZE, chans);
-	neucon->initialize();
-	//IS_RUNNING = true;
-	clock_gettime(CLOCK_REALTIME, &start_stream);
-
-	do {
-		size_t n = neucon->available(0);
-		for (int i = 0; i < n; i++)
-		{
-			timestamp_t ts = neucon->getData(neubuf);
-			fwrite(&ts, sizeof(timestamp_t), 1, nout_ts2);
-			fwrite(neubuf, sizeof(int16_t), chans.size(), nout2);
-		}
-		std::this_thread::yield();
-		clock_gettime(CLOCK_REALTIME, &current_stream);
-	} while (current_stream.tv_sec - start_stream.tv_sec < 60);
-
-	client->unsubscribeHighFreqData(hfType_NEURO, TRODES_NETWORK_ID);
-	fclose(nout2);
-	fclose(nout_ts2);
-
-
-	free(neubuf);
 	delete client;
+	fclose(mylogoutfile);
 	return 0;
 }
 
@@ -192,17 +217,18 @@ void TestClient::recv_timerate(int timerate)
 
 void TestClient::recv_event(std::string origin, std::string event, TrodesMsg & msg)
 {
-	log_msg("recv_event: %s, %s, %u", origin.c_str(), event.c_str(), msg.numContents());
+	log_msg("recv_event: %s, %s, %s, %d", origin.c_str(), event.c_str(), msg.getformat().c_str(), msg.size());
+	uint8_t i1;
+	uint16_t i2;
+	double d1, d2, d3, d4, d5, d6, d7, d8;
+	msg.popcontents(msg.getformat(), i1, i2, d1, d2, d3, d4, d5, d6, d7, d8);
+	log_msg("%d, %d, %f, %f, %f, %f, %f, %f, %f, %f", int(i1), int(i2), d1, d2, d3, d4, d5, d6, d7, d8);
+	IS_RUNNING = false;
 }
 
-void pyfun_end_first_run()
+void pyfun_end_run()
 {
-	//IS_RUNNING = false;
-}
-
-void pyfun_end_second_run()
-{
-	//IS_RUNNING = false;
+	IS_RUNNING = false;
 }
 
 int main() {
